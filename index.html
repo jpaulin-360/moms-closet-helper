@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mom's Closet Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+        #cameraPreview {
+            width: 100%;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+        #capturedImage {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #progressBar {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .result-box {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .button-group button {
+            flex: 1;
+        }
+        .hidden {
+            display: none;
+        }
+        #fileInput {
+            display: none;
+        }
+        .file-label {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            width: 100%;
+            text-align: center;
+            display: block;
+        }
+        .file-label:hover {
+            background-color: #3367d6;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        .notification.error {
+            background-color: #f44336;
+        }
+        .analysis-type {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .analysis-type button {
+            flex: 1;
+        }
+        .analysis-type button.active {
+            background-color: #ea4335;
+        }
+        .description-box {
+            margin-bottom: 15px;
+        }
+        .description-box textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 80px;
+            resize: vertical;
+        }
+        .crochet-section {
+            background-color: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .crochet-section h3 {
+            margin-top: 0;
+            color: #ff8f00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mom's Closet Helper</h1>
+        
+        <div class="analysis-type">
+            <button id="clothingAnalysis" class="active">Clothing Analysis</button>
+            <button id="crochetAnalysis">Crochet Analysis</button>
+        </div>
+        
+        <div class="camera-container">
+            <div id="cameraPreview">
+                <p>Take a photo or upload an image of the item</p>
+            </div>
+            <img id="capturedImage" alt="Captured item">
+        </div>
+        
+        <input type="file" id="fileInput" accept="image/*">
+        <label for="fileInput" class="file-label">Upload Photo</label>
+        
+        <div class="description-box">
+            <label for="itemDescription"><strong>Optional Description:</strong></label>
+            <textarea id="itemDescription" placeholder="Add details about the item to help with analysis (materials, size, condition, etc.)"></textarea>
+        </div>
+        
+        <div id="clothingAnalysisSection">
+            <button id="analyzeButton" disabled>Analyze Clothing</button>
+        </div>
+        
+        <div id="crochetAnalysisSection" class="crochet-section hidden">
+            <h3>Homemade Crochet Analysis</h3>
+            <p>This feature estimates the value of handmade crochet items based on materials, time, craftsmanship, and current market trends.</p>
+            <button id="analyzeCrochetButton" disabled>Analyze Crochet Item</button>
+        </div>
+        
+        <div id="progressBar">
+            <p>Analyzing image, please wait...</p>
+        </div>
+        
+        <div class="result-title">Analysis Results:</div>
+        <div id="analysisResult" class="result-box">
+            <p>Analysis will appear here</p>
+        </div>
+        
+        <div class="result-title">Listing Text:</div>
+        <div id="listingResult" class="result-box">
+            <p>Generated listing will appear here</p>
+        </div>
+        
+        <div class="button-group">
+            <button id="copyButton" disabled>Copy Listing</button>
+            <button id="saveButton" disabled>Save Listing</button>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const capturedImage = document.getElementById('capturedImage');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const analyzeCrochetButton = document.getElementById('analyzeCrochetButton');
+        const progressBar = document.getElementById('progressBar');
+        const analysisResult = document.getElementById('analysisResult');
+        const listingResult = document.getElementById('listingResult');
+        const copyButton = document.getElementById('copyButton');
+        const saveButton = document.getElementById('saveButton');
+        const notification = document.getElementById('notification');
+        const itemDescription = document.getElementById('itemDescription');
+        const clothingAnalysis = document.getElementById('clothingAnalysis');
+        const crochetAnalysis = document.getElementById('crochetAnalysis');
+        const clothingAnalysisSection = document.getElementById('clothingAnalysisSection');
+        const crochetAnalysisSection = document.getElementById('crochetAnalysisSection');
+        
+        // Your Gemini API key is automatically included
+        const GEMINI_API_KEY = "AIzaSyDmK5qWW-5nrpfjx8LgFJ8xfTk5LPC-UDY";
+        
+        // Current analysis type
+        let currentAnalysisType = "clothing";
+        
+        // Current listing data
+        let currentListing = {
+            image: null,
+            identification: "",
+            title: "",
+            description: "",
+            keywords: "",
+            price: "",
+            size: ""
+        };
+        
+        // Analysis type buttons
+        clothingAnalysis.addEventListener('click', function() {
+            currentAnalysisType = "clothing";
+            clothingAnalysis.classList.add('active');
+            crochetAnalysis.classList.remove('active');
+            clothingAnalysisSection.classList.remove('hidden');
+            crochetAnalysisSection.classList.add('hidden');
+            resetResults();
+        });
+        
+        crochetAnalysis.addEventListener('click', function() {
+            currentAnalysisType = "crochet";
+            crochetAnalysis.classList.add('active');
+            clothingAnalysis.classList.remove('active');
+            crochetAnalysisSection.classList.remove('hidden');
+            clothingAnalysisSection.classList.add('hidden');
+            resetResults();
+        });
+        
+        // Handle file upload
+        fileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    capturedImage.src = e.target.result;
+                    capturedImage.style.display = 'block';
+                    analyzeButton.disabled = false;
+                    analyzeCrochetButton.disabled = false;
+                    
+                    // Store the image data
+                    currentListing.image = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Analyze button click
+        analyzeButton.addEventListener('click', analyzeClothing);
+        
+        // Analyze crochet button click
+        analyzeCrochetButton.addEventListener('click', analyzeCrochet);
+        
+        // Copy button click
+        copyButton.addEventListener('click', copyToClipboard);
+        
+        // Save button click
+        saveButton.addEventListener('click', saveListing);
+        
+        function resetResults() {
+            analysisResult.innerHTML = "<p>Analysis will appear here</p>";
+            listingResult.innerHTML = "<p>Generated listing will appear here</p>";
+            copyButton.disabled = true;
+            saveButton.disabled = true;
+        }
+        
+        function analyzeClothing() {
+            if (!capturedImage.src || capturedImage.src === "") {
+                showNotification("Please upload an image first", true);
+                return;
+            }
+            
+            // Show progress
+            progressBar.style.display = 'block';
+            analyzeButton.disabled = true;
+            copyButton.disabled = true;
+            saveButton.disabled = true;
+            
+            // Convert image to base64
+            const base64Image = capturedImage.src.split(',')[1];
+            
+            // Get optional description
+            const userDescription = itemDescription.value.trim();
+            
+            // Create the prompt
+            let prompt = `
+                Analyze this clothing item and create a complete Poshmark listing. Include:
+                1. Item identification (brand if visible, style, type)
+                2. Detailed description (materials, condition, measurements if estimable)
+                3. Suggested title (under 50 characters)
+                4. 5 relevant keywords
+                5. Suggested price range based on current market values
+                6. Size estimate if visible
+                
+                Search the web for current pricing and descriptions of similar items to ensure accuracy.
+                
+                Format your response exactly like this:
+                IDENTIFICATION: [your analysis]
+                TITLE: [title]
+                DESCRIPTION: [detailed description]
+                KEYWORDS: [keyword1, keyword2, keyword3, keyword4, keyword5]
+                PRICE: [price range]
+                SIZE: [size estimate]
+            `;
+            
+            // Add user description if provided
+            if (userDescription) {
+                prompt += `
+                
+                Additional context provided by the user:
+                ${userDescription}
+                `;
+            }
+            
+            // Prepare the request body
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: prompt
+                            },
+                            {
+                                inline_data: {
+                                    mime_type: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }
+                ],
+                tools: [
+                    {
+                        googleSearch: {}
+                    }
+                ]
+            };
+            
+            // Make the API request
+            fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide progress
+                progressBar.style.display = 'none';
+                analyzeButton.disabled = false;
+                
+                // Extract the response text
+                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    
+                    // Parse the response
+                    const sections = responseText.split('\n');
+                    let identification = "";
+                    let title = "";
+                    let description = "";
+                    let keywords = "";
+                    let price = "";
+                    let size = "";
+                    
+                    for (const section of sections) {
+                        if (section.startsWith("IDENTIFICATION:")) {
+                            identification = section.substringAfter("IDENTIFICATION:").trim();
+                        } else if (section.startsWith("TITLE:")) {
+                            title = section.substringAfter("TITLE:").trim();
+                        } else if (section.startsWith("DESCRIPTION:")) {
+                            description = section.substringAfter("DESCRIPTION:").trim();
+                        } else if (section.startsWith("KEYWORDS:")) {
+                            keywords = section.substringAfter("KEYWORDS:").trim();
+                        } else if (section.startsWith("PRICE:")) {
+                            price = section.substringAfter("PRICE:").trim();
+                        } else if (section.startsWith("SIZE:")) {
+                            size = section.substringAfter("SIZE:").trim();
+                        }
+                    }
+                    
+                    // Store the listing data
+                    currentListing.identification = identification;
+                    currentListing.title = title;
+                    currentListing.description = description;
+                    currentListing.keywords = keywords;
+                    currentListing.price = price;
+                    currentListing.size = size;
+                    
+                    // Display results
+                    analysisResult.innerHTML = `<p><strong>Item:</strong> ${identification}</p><p><strong>Size:</strong> ${size}</p>`;
+                    
+                    const listingText = `
+                        <h3>${title}</h3>
+                        <p>${description}</p>
+                        <p><strong>Size:</strong> ${size}</p>
+                        <p><strong>Price:</strong> ${price}</p>
+                        <p><strong>Keywords:</strong> ${keywords}</p>
+                    `;
+                    
+                    listingResult.innerHTML = listingText;
+                    
+                    // Enable buttons
+                    copyButton.disabled = false;
+                    saveButton.disabled = false;
+                } else {
+                    throw new Error("Invalid response from API");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                progressBar.style.display = 'none';
+                analyzeButton.disabled = false;
+                analysisResult.innerHTML = `<p>Error: ${error.message}</p>`;
+                listingResult.innerHTML = `<p>Failed to analyze image</p>`;
+                showNotification("Failed to analyze image: " + error.message, true);
+            });
+        }
+        
+        function analyzeCrochet() {
+            if (!capturedImage.src || capturedImage.src === "") {
+                showNotification("Please upload an image first", true);
+                return;
+            }
+            
+            // Show progress
+            progressBar.style.display = 'block';
+            analyzeCrochetButton.disabled = true;
+            copyButton.disabled = true;
+            saveButton.disabled = true;
+            
+            // Convert image to base64
+            const base64Image = capturedImage.src.split(',')[1];
+            
+            // Get optional description
+            const userDescription = itemDescription.value.trim();
+            
+            // Create the prompt
+            let prompt = `
+                Analyze this homemade crochet item and estimate its value. Include:
+                1. Item identification (type of crochet item, pattern if recognizable)
+                2. Detailed description (materials, craftsmanship, condition, size, colors)
+                3. Estimated time and skill level required to create
+                4. Materials cost estimation
+                5. Fair market value based on:
+                   - Materials used
+                   - Time and skill required
+                   - Current market trends for handmade items
+                   - Similar items on Etsy, Pinterest, and other craft marketplaces
+                6. Suggested title for selling
+                7. 5 relevant keywords for selling online
+                
+                Search the web for current pricing of similar handmade crochet items on platforms like Etsy, eBay, and craft fairs.
+                
+                Format your response exactly like this:
+                ITEM: [item identification]
+                DESCRIPTION: [detailed description]
+                TIME_AND_SKILL: [estimated time and skill level]
+                MATERIALS_COST: [estimated cost of materials]
+                MARKET_VALUE: [fair market value with justification]
+                TITLE: [suggested title]
+                KEYWORDS: [keyword1, keyword2, keyword3, keyword4, keyword5]
+            `;
+            
+            // Add user description if provided
+            if (userDescription) {
+                prompt += `
+                
+                Additional context provided by the user:
+                ${userDescription}
+                `;
+            }
+            
+            // Prepare the request body
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: prompt
+                            },
+                            {
+                                inline_data: {
+                                    mime_type: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }
+                ],
+                tools: [
+                    {
+                        googleSearch: {}
+                    }
+                ]
+            };
+            
+            // Make the API request
+            fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide progress
+                progressBar.style.display = 'none';
+                analyzeCrochetButton.disabled = false;
+                
+                // Extract the response text
+                if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    
+                    // Parse the response
+                    const sections = responseText.split('\n');
+                    let item = "";
+                    let description = "";
+                    let timeAndSkill = "";
+                    let materialsCost = "";
+                    let marketValue = "";
+                    let title = "";
+                    let keywords = "";
+                    
+                    for (const section of sections) {
+                        if (section.startsWith("ITEM:")) {
+                            item = section.substringAfter("ITEM:").trim();
+                        } else if (section.startsWith("DESCRIPTION:")) {
+                            description = section.substringAfter("DESCRIPTION:").trim();
+                        } else if (section.startsWith("TIME_AND_SKILL:")) {
+                            timeAndSkill = section.substringAfter("TIME_AND_SKILL:").trim();
+                        } else if (section.startsWith("MATERIALS_COST:")) {
+                            materialsCost = section.substringAfter("MATERIALS_COST:").trim();
+                        } else if (section.startsWith("MARKET_VALUE:")) {
+                            marketValue = section.substringAfter("MARKET_VALUE:").trim();
+                        } else if (section.startsWith("TITLE:")) {
+                            title = section.substringAfter("TITLE:").trim();
+                        } else if (section.startsWith("KEYWORDS:")) {
+                            keywords = section.substringAfter("KEYWORDS:").trim();
+                        }
+                    }
+                    
+                    // Store the listing data
+                    currentListing.identification = item;
+                    currentListing.title = title;
+                    currentListing.description = description;
+                    currentListing.keywords = keywords;
+                    currentListing.price = marketValue;
+                    currentListing.size = "N/A";
+                    
+                    // Display results
+                    analysisResult.innerHTML = `
+                        <p><strong>Item:</strong> ${item}</p>
+                        <p><strong>Time & Skill:</strong> ${timeAndSkill}</p>
+                        <p><strong>Materials Cost:</strong> ${materialsCost}</p>
+                        <p><strong>Market Value:</strong> ${marketValue}</p>
+                    `;
+                    
+                    const listingText = `
+                        <h3>${title}</h3>
+                        <p>${description}</p>
+                        <p><strong>Time & Skill Required:</strong> ${timeAndSkill}</p>
+                        <p><strong>Materials Cost:</strong> ${materialsCost}</p>
+                        <p><strong>Fair Market Value:</strong> ${marketValue}</p>
+                        <p><strong>Keywords:</strong> ${keywords}</p>
+                    `;
+                    
+                    listingResult.innerHTML = listingText;
+                    
+                    // Enable buttons
+                    copyButton.disabled = false;
+                    saveButton.disabled = false;
+                } else {
+                    throw new Error("Invalid response from API");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                progressBar.style.display = 'none';
+                analyzeCrochetButton.disabled = false;
+                analysisResult.innerHTML = `<p>Error: ${error.message}</p>`;
+                listingResult.innerHTML = `<p>Failed to analyze crochet item</p>`;
+                showNotification("Failed to analyze crochet item: " + error.message, true);
+            });
+        }
+        
+        function copyToClipboard() {
+            const listingText = listingResult.innerText;
+            if (listingText && listingText !== "Generated listing will appear here") {
+                navigator.clipboard.writeText(listingText)
+                    .then(() => {
+                        showNotification("Listing copied to clipboard!");
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        showNotification("Failed to copy listing", true);
+                    });
+            }
+        }
+        
+        function saveListing() {
+            const listingText = listingResult.innerText;
+            if (listingText && listingText !== "Generated listing will appear here") {
+                const blob = new Blob([listingText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `listing_${currentAnalysisType}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification("Listing saved successfully!");
+            }
+        }
+        
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.className = isError ? "notification error" : "notification";
+            notification.style.display = "block";
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 3000);
+        }
+        
+        // Helper function to get text after a prefix
+        String.prototype.substringAfter = function(prefix) {
+            const index = this.indexOf(prefix);
+            return index === -1 ? this : this.substring(index + prefix.length);
+        };
+    </script>
+</body>
+</html>
